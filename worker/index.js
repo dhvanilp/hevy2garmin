@@ -100,6 +100,15 @@ export default {
 
       const oauth2 = await exchangeResp.json();
 
+      // Compute absolute timestamps that garth/garminconnect expects
+      const now = Math.floor(Date.now() / 1000);
+      if (oauth2.expires_in && !oauth2.expires_at) {
+        oauth2.expires_at = now + oauth2.expires_in;
+      }
+      if (oauth2.refresh_token_expires_in && !oauth2.refresh_token_expires_at) {
+        oauth2.refresh_token_expires_at = now + oauth2.refresh_token_expires_in;
+      }
+
       return Response.json(
         {
           oauth1: {

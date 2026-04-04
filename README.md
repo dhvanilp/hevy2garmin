@@ -61,7 +61,11 @@ Sign up at [github.com](https://github.com/signup). You'll use this to sign into
 
 **Step 3: Create a GitHub access token**
 
-Open [this link](https://github.com/settings/tokens/new?scopes=repo,workflow&description=hevy2garmin). The permissions are pre-filled. Scroll down and click **Generate token**. **Copy the token immediately** (starts with `ghp_`). GitHub only shows it once.
+This token lets hevy2garmin set up automatic syncing on your behalf. Open [this link](https://github.com/settings/tokens/new?scopes=repo,workflow&description=hevy2garmin) (sign in if prompted). The page looks complex but you only need to do three things:
+
+1. Set **Expiration** to **No expiration** (otherwise auto-sync stops when it expires)
+2. Scroll past everything else to the bottom, click **Generate token**
+3. **Copy the token immediately** (starts with `ghp_`). GitHub only shows it once. Paste it somewhere safe for the next step.
 
 **Step 4: Deploy**
 

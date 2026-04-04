@@ -359,10 +359,18 @@ async def setup_save(
             get_client(garmin_em, garmin_pw)
         except Exception as e:
             logger.warning("Garmin login test failed: %s", e)
-            garmin_error = str(e)
+            err = str(e)
+            if "MFA" in err.upper():
+                garmin_error = (
+                    "Garmin MFA (two-factor authentication) is enabled. "
+                    "Temporarily disable MFA in your Garmin account settings, "
+                    "connect here, then re-enable it."
+                )
+            else:
+                garmin_error = err
     if garmin_error:
         return _render("setup.html", config=load_config(), garmin_error=garmin_error,
-                        allow_skip=True)
+                        allow_skip=True, is_cloud=False)
 
     return RedirectResponse("/", status_code=303)
 
@@ -1026,7 +1034,15 @@ async def api_setup_actions(request: Request):
     }
 
     try:
-        # a) Enable Actions on the fork
+        # a) Make repo public (free GitHub accounts get 0 Actions minutes on private repos)
+        req.patch(
+            f"https://api.github.com/repos/{owner}/{repo}",
+            headers=headers,
+            json={"private": False},
+            timeout=10,
+        )
+
+        # b) Enable Actions on the fork
         resp = req.put(
             f"https://api.github.com/repos/{owner}/{repo}/actions/permissions",
             headers=headers,

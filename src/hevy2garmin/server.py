@@ -1094,23 +1094,7 @@ async def api_sync_one(request: Request):
         with tempfile.TemporaryDirectory() as tmp:
             fit_path = f"{tmp}/{unsynced['id']}.fit"
             result = generate_fit(unsynced, hr_samples=None, output_path=fit_path)
-            try:
-                upload_result = upload_fit(garmin_client, fit_path, workout_start=unsynced.get("start_time"))
-            except Exception as upload_err:
-                err_str = str(upload_err)
-                logger.warning("Upload failed for %s: %s", unsynced["title"], err_str[:300])
-                if "412" in err_str or "409" in err_str or "Duplicate" in err_str.lower():
-                    db.mark_synced(
-                        hevy_id=unsynced["id"],
-                        garmin_activity_id=None,
-                        title=unsynced["title"],
-                        calories=result.get("calories"),
-                        avg_hr=result.get("avg_hr"),
-                    )
-                    remaining = hevy.get_workout_count() - db.get_synced_count()
-                    return JSONResponse({"synced": 1, "skipped_duplicate": True, "title": unsynced["title"], "remaining": max(0, remaining), "done": remaining <= 0})
-                raise  # Re-raise non-duplicate errors
-
+            upload_result = upload_fit(garmin_client, fit_path, workout_start=unsynced.get("start_time"))
             aid = upload_result.get("activity_id")
             if aid:
                 rename_activity(garmin_client, aid, unsynced["title"])
@@ -1127,7 +1111,37 @@ async def api_sync_one(request: Request):
         remaining = hevy.get_workout_count() - db.get_synced_count()
         return JSONResponse({"synced": 1, "title": unsynced["title"], "remaining": max(0, remaining), "done": remaining <= 0})
     except Exception as e:
-        return JSONResponse({"synced": 0, "error": str(e), "remaining": -1, "done": False}, status_code=500)
+        logger.error("Sync failed for %s: %s", unsynced.get("title", "?"), str(e)[:300])
+        # User-friendly error
+        err = str(e)
+        if "Login failed" in err or "OAuth" in err or "token" in err:
+            err = "Garmin connection expired. Go to Setup to reconnect."
+        elif "412" in err or "Precondition" in err:
+            err = "Garmin rejected the upload. Check Vercel logs for details."
+        elif len(err) > 150:
+            err = err[:150] + "..."
+        return JSONResponse({"synced": 0, "error": err, "remaining": -1, "done": False}, status_code=500)
+
+
+@app.post("/api/reset-sync")
+async def reset_sync():
+    """Clear all sync records — for debugging/testing only."""
+    from fastapi.responses import JSONResponse
+    try:
+        _db = db.get_db()
+        if hasattr(_db, '_get_conn'):
+            with _db._get_conn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("DELETE FROM synced_workouts")
+                conn.commit()
+        else:
+            import sqlite3
+            conn = _db._conn if hasattr(_db, '_conn') else sqlite3.connect(str(_db.db_path))
+            conn.execute("DELETE FROM synced_workouts")
+            conn.commit()
+        return JSONResponse({"ok": True, "message": "Sync records cleared"})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 
 @app.get("/api/cron/sync")

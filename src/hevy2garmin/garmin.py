@@ -58,7 +58,19 @@ def upload_fit(client: Garmin, fit_path: str | Path, workout_start: str | None =
     if not fit_path.exists():
         raise FileNotFoundError(f"FIT file not found: {fit_path}")
 
-    resp = _limiter.call(client.upload_activity, str(fit_path))
+    try:
+        resp = _limiter.call(client.upload_activity, str(fit_path))
+    except Exception as e:
+        err = str(e)
+        # Try to extract response body for debugging
+        if hasattr(e, 'response') and e.response is not None:
+            try:
+                body = e.response.text[:500]
+                logger.error("Upload rejected — status=%s body=%s", e.response.status_code, body)
+                raise RuntimeError(f"Garmin rejected upload ({e.response.status_code}): {body}") from e
+            except AttributeError:
+                pass
+        raise
     upload_id = None
     activity_id = None
 

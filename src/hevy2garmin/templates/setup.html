@@ -70,7 +70,7 @@
             <div class="card-title" style="margin-bottom: 16px;">2. Garmin Connect</div>
             <div class="form-group">
                 <label class="form-label" for="garmin_email">Email</label>
-                <input class="form-input" type="email" id="garmin_email" name="garmin_email" placeholder="your@email.com" value="{{ config.get('garmin_email', '') }}" autocomplete="email">
+                <input class="form-input" type="password" id="garmin_email" name="garmin_email" placeholder="{{ '••••••••' ~ config.get('garmin_email', '')[-4:] if config.get('garmin_email') else 'your@email.com' }}" autocomplete="email">
             </div>
             <div class="form-group">
                 <label class="form-label" for="garmin_password">Password</label>

@@ -53,11 +53,8 @@
             <span class="card-title">Credentials</span>
         </div>
         <div class="form-group">
-            <label class="form-label">Hevy API Key</label>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 13px; color: var(--text-muted);">{{ '••••••••' + config.get('hevy_api_key', '')[-4:] if config.get('hevy_api_key') else 'Not configured' }}</span>
-                <a href="/setup" class="btn btn-secondary btn-sm" style="font-size: 12px;">Change in Setup</a>
-            </div>
+            <label class="form-label" for="hevy_api_key">Hevy API Key</label>
+            <input class="form-input" type="password" id="hevy_api_key" name="hevy_api_key" placeholder="Leave blank to keep current">
         </div>
         <div class="form-grid">
             <div class="form-group">

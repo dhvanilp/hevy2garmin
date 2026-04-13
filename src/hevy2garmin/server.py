@@ -1479,8 +1479,34 @@ async def _do_sync_one(request: Request):
     # Sync this one workout
     try:
         from hevy2garmin.garmin import find_activity_by_start_time
+        from hevy2garmin.merge import attempt_merge
         garmin_client = get_client(config.get("garmin_email"))
         workout_start = unsynced.get("start_time")
+        merge_mode = config.get("merge_mode", True)
+        sync_method = "upload"
+
+        # Merge mode: try to enhance a watch-recorded activity with Hevy data
+        if merge_mode:
+            merge_result = attempt_merge(garmin_client, unsynced, db.get_db())
+            if merge_result.merged:
+                aid = merge_result.activity_id
+                result = {"calories": 0, "avg_hr": None}
+                # Generate FIT just for calorie estimate
+                with tempfile.TemporaryDirectory() as tmp:
+                    fit_path = f"{tmp}/{unsynced['id']}.fit"
+                    result = generate_fit(unsynced, hr_samples=None, output_path=fit_path)
+                sync_method = "merge"
+                db.mark_synced(
+                    hevy_id=unsynced["id"],
+                    garmin_activity_id=str(aid),
+                    title=unsynced["title"],
+                    calories=result.get("calories"),
+                    avg_hr=result.get("avg_hr"),
+                    hevy_updated_at=unsynced.get("updated_at"),
+                    sync_method=sync_method,
+                )
+                remaining = hevy.get_workout_count() - db.get_synced_count()
+                return JSONResponse({"synced": 1, "title": unsynced["title"], "remaining": max(0, remaining), "done": remaining <= 0})
 
         # Dedup: check if this workout already exists on Garmin before uploading.
         # Prevents duplicates when a prior sync uploaded successfully but crashed
@@ -1499,6 +1525,7 @@ async def _do_sync_one(request: Request):
             rename_activity(garmin_client, aid, unsynced["title"])
             desc = generate_description(unsynced, calories=result.get("calories"), avg_hr=result.get("avg_hr"))
             set_description(garmin_client, aid, desc)
+            sync_method = "upload_fallback"
         else:
             with tempfile.TemporaryDirectory() as tmp:
                 fit_path = f"{tmp}/{unsynced['id']}.fit"
@@ -1517,6 +1544,7 @@ async def _do_sync_one(request: Request):
             calories=result.get("calories"),
             avg_hr=result.get("avg_hr"),
             hevy_updated_at=unsynced.get("updated_at"),
+            sync_method=sync_method,
         )
 
         remaining = hevy.get_workout_count() - db.get_synced_count()

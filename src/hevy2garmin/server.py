@@ -1141,7 +1141,10 @@ async def api_toggle_autosync(request: Request):
     form = await request.form()
     enabled_raw = form.get("enabled", "false")
     enabled = enabled_raw in ("true", "True", "1", True)
-    interval = int(form.get("interval", 120))
+    try:
+        interval = int(form.get("interval", 120))
+    except (ValueError, TypeError):
+        interval = 120
     if interval not in (30, 60, 120, 240, 360, 720, 1440):
         interval = 120
 
@@ -1388,7 +1391,10 @@ async def api_setup_actions(request: Request):
     interval = 120
     try:
         form = await request.form()
-        interval = int(form.get("interval", 120))
+        raw_interval = form.get("interval", 120)
+        interval = int(raw_interval)
+    except (ValueError, TypeError):
+        interval = 120
     except Exception:
         pass
     ok, msg = await _setup_github_actions(interval_minutes=interval)

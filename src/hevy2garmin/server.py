@@ -804,6 +804,8 @@ async def settings_save(
         config["hevy_api_key"] = hevy_api_key
     if garmin_email:
         config["garmin_email"] = garmin_email
+    if garmin_password:
+        config["garmin_password"] = garmin_password
     config["user_profile"].update(weight_kg=weight_kg, birth_year=birth_year, sex=sex, vo2max=vo2max)
     config["timing"].update(
         working_set_seconds=working_set_seconds, warmup_set_seconds=warmup_set_seconds,

@@ -366,7 +366,7 @@ def generate_description(workout: dict, calories: int | None = None, avg_hr: int
                     reps = [s.get("reps", 0) for s in normal]
                     top_weight = max(weights) if weights else 0
                     top_reps = max(reps) if reps else 0
-                    lines.append(f"• {name}: {len(normal)} {n_label} · {top_weight:.1f}kg × {top_reps}")
+                    lines.append(f" - {name}: {len(normal)} {n_label}")
             elif warmup:
                 s_label = "set" if len(warmup) == 1 else "sets"
                 lines.append(f"• {name}: {len(warmup)} warmup {s_label}")

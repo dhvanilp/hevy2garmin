@@ -337,18 +337,9 @@ def generate_description(workout: dict, calories: int | None = None, avg_hr: int
         except Exception:
             pass
 
-    lines.append(f"🏋️ {title}")
-    if duration_s > 0:
-        m = duration_s // 60
-        lines.append(f"⏱️ {m} min")
-    if calories:
-        lines.append(f"🔥 {calories} kcal")
-    if avg_hr:
-        lines.append(f"❤️ avg {avg_hr} bpm")
 
     exercises = workout.get("exercises", [])
     if exercises:
-        lines.append("")
         for ex in exercises:
             name = ex.get("title") or ex.get("name", "Unknown")
             all_sets = ex.get("sets", [])
@@ -380,5 +371,4 @@ def generate_description(workout: dict, calories: int | None = None, avg_hr: int
                 s_label = "set" if len(warmup) == 1 else "sets"
                 lines.append(f"• {name}: {len(warmup)} warmup {s_label}")
 
-    lines.append("\n— synced by hevy2garmin")
     return "\n".join(lines)

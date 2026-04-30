@@ -360,7 +360,7 @@ def generate_description(workout: dict, calories: int | None = None, avg_hr: int
                         parts.append(f"{total_dist / 1000:.1f}km")
                     if total_dur > 0:
                         parts.append(f"{int(total_dur // 60)}min")
-                    lines.append(f"• {name}: {' · '.join(parts)}")
+                    lines.append(f"- {name}: {' · '.join(parts)}")
                 else:
                     weights = [s.get("weight_kg") or s.get("weight", 0) for s in normal]
                     reps = [s.get("reps", 0) for s in normal]
@@ -369,6 +369,6 @@ def generate_description(workout: dict, calories: int | None = None, avg_hr: int
                     lines.append(f" - {name}: {len(normal)} {n_label}")
             elif warmup:
                 s_label = "set" if len(warmup) == 1 else "sets"
-                lines.append(f"• {name}: {len(warmup)} warmup {s_label}")
+                lines.append(f"- {name}: {len(warmup)} warmup {s_label}")
 
     return "\n".join(lines)
